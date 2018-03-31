@@ -1,7 +1,6 @@
 package com.allardworks.workinator3.httpapi;
 
-import com.allardworks.workinator3.core.PartitionExistsException;
-import com.allardworks.workinator3.core.Workinator;
+import com.allardworks.workinator3.core.*;
 import com.allardworks.workinator3.core.commands.CreatePartitionCommand;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -21,9 +20,7 @@ import static java.util.stream.Collectors.toList;
 @RestController
 @RequestMapping(value = "/api/v1")
 @RequiredArgsConstructor
-public class AdminController {
-    private final ConsumerService consumerService;
-    private final PartitionService partitionService;
+public class WorkinatorController {
     private final Workinator workinator;
 
     @Data
@@ -33,8 +30,8 @@ public class AdminController {
     }
 
     @GetMapping("consumers")
-    public Iterable<Consumer> getConsumers() {
-        return consumerService.getConsumers();
+    public Iterable<ConsumerInfo> getConsumers() {
+        return workinator.getConsumers();
     }
 
     @GetMapping("consumers/mini")
@@ -44,13 +41,9 @@ public class AdminController {
                 .map(c -> {
                         val workers =
                                 c
-                                .getStatus()
                                 .getWorkers()
                                 .stream()
-                                .map(w -> {
-                                    val a = w.getAssignment();
-                                    return (String)(a == null ? null : a.getPartitionKey());
-                                })
+                                .map(ConsumerWorkerInfo::getPartitionKey)
                                 .filter(Objects::nonNull)
                                 .collect(toList());
                         return new ConsumerMini(c.getName(), workers);
@@ -59,19 +52,21 @@ public class AdminController {
     }
 
     @GetMapping("partitions")
-    public Iterable<Partition> getPartitions() {
-        return partitionService.getPartitions();
+    public List<PartitionInfo> getPartitions() {
+        return workinator.getPartitions();
     }
 
     @GetMapping("partitions/{partitionKey}")
-    public Partition getPartition(@PathVariable("partitionKey") final String partitionKey) {
-        return partitionService.getPartition(partitionKey);
+    public PartitionInfo getPartition(@PathVariable("partitionKey") final String partitionKey) {
+        val partitionInfo = getPartitions().stream().filter(p -> p.getPartitionKey().equals(partitionKey)).findFirst();
+        // TODO: 404
+        return partitionInfo.orElse(null);
     }
 
     @PutMapping("partitions/{partitionKey}")
-    public Partition createPartition(@PathVariable("partitionKey") String partitionKey, @RequestBody final CreatePartitionRequest request) throws PartitionExistsException {
+    public PartitionInfo createPartition(@PathVariable("partitionKey") String partitionKey, @RequestBody final CreatePartitionRequest request) throws PartitionExistsException {
         // TODO: currently results in 500 if partition exists.
-        // should be idempotent
+        // should be idempotent - update the config
         val createCommand = CreatePartitionCommand
                 .builder()
                 .partitionKey(partitionKey)
@@ -79,6 +74,6 @@ public class AdminController {
                 .maxIdleTimeSeconds(request.getMaxIdleTimeSeconds())
                 .build();
         workinator.createPartition(createCommand);
-        return partitionService.getPartition(partitionKey);
+        return getPartition(partitionKey);
     }
 }
