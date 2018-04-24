@@ -1,0 +1,27 @@
+<!DOCTYPE HTML>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Getting Started: Serving Web Content</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <meta http-equiv="refresh" content="1">
+    <!-- <link rel="stylesheet" href="https://unpkg.com/purecss@1.0.0/build/pure-min.css"
+          integrity="sha384-nn4HPE8lTHyVtfCBi5yW9d20FjT8BJwUXyWZT9InLYax14RDjBj46LmSztkmNP9w" crossorigin="anonymous"> -->
+</head>
+<body>
+<table th:each="c: ${consumers}" class="pure-table pure-table-bordered">
+    <tr>
+        <th colspan="3" th:text="${c.name}"></th>
+    </tr>
+    <tr>
+        <th>Worker Number</th>
+        <th>Partition</th>
+        <th>Assignment Rule</th>
+    </tr>
+    <tr th:each="w: ${c.workers}">
+        <td th:text="${w.workerNumber}"></td>
+        <td th:text="${w.partitionKey}"></td>
+        <td th:text="${w.rule}"></td>
+    </tr>
+</table>
+</body>
+</html>

@@ -17,7 +17,7 @@ import static java.util.stream.Collectors.toList;
  * Created by jaya on 2/28/18.
  * k?
  */
-@RestController
+//@RestController
 @RequestMapping(value = "/api/v1")
 @RequiredArgsConstructor
 public class WorkinatorController {
